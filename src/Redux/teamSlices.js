@@ -1,39 +1,33 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { fetchTeamData } from "../Services/api"
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { fetchTeam } from "../Services/api";
 
-export const getTeamData = createAsyncThunk("team/getTeamData", async () => {
-  const response = await fetchTeamData()
-  return response
-})
-
-const initialState = {
-  data: [],
-  summary: {},
-  loading: false,
-  error: null,
-}
+export const getTeamData = createAsyncThunk(
+  "team/getData",
+  async () => {
+    const response = await fetchTeam();
+    return response.data.result.data.result;
+  }
+);
 
 const teamSlice = createSlice({
   name: "team",
-  initialState,
-  reducers: {},
+  initialState: {
+    data: [],
+    loading: false,
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getTeamData.pending, (state) => {
-        state.loading = true
-        state.error = null
+        state.loading = true;
       })
       .addCase(getTeamData.fulfilled, (state, action) => {
-        state.loading = false
-        state.data = action.payload.data
-        state.summary = action.payload.summary
+        state.loading = false;
+        state.data = action.payload;
       })
-      .addCase(getTeamData.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.error.message
-      })
+      .addCase(getTeamData.rejected, (state) => {
+        state.loading = false;
+      });
   },
-})
+});
 
-export default teamSlice.reducer
-
+export default teamSlice.reducer;

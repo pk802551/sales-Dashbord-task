@@ -1,137 +1,45 @@
-"use client"
+import React, { useEffect, useRef } from "react";
+import * as d3 from "d3";
 
-import { useRef, useEffect } from "react"
-import * as d3 from "d3"
-import { formatCurrency } from "../Services/api"
-
-const DonutChartComponent = ({ data, colors, totalValue, showLegend = false }) => {
-  const svgRef = useRef()
+const DonutChart = ({ data }) => {
+  const ref = useRef();
 
   useEffect(() => {
-    if (!data || data.length === 0) return
+    if (!data.length) return;
+    const svg = d3.select(ref.current);
+    svg.selectAll("*").remove();
 
-    // Clear any existing SVG
-    d3.select(svgRef.current).selectAll("*").remove()
-
-    const width = svgRef.current.clientWidth
-    const height = svgRef.current.clientHeight
-    const radius = (Math.min(width, height) / 2) * 0.8
-
-    // Create SVG
-    const svg = d3
-      .select(svgRef.current)
+    const width = 300, height = 300, radius = Math.min(width, height) / 2;
+    const svgEl = svg
+      .attr("width", width)
+      .attr("height", height)
       .append("g")
-      .attr("transform", `translate(${width / 2},${height / 2})`)
+      .attr("transform", `translate(${width / 2},${height / 2})`);
 
-    // Create pie chart
-    const pie = d3
-      .pie()
-      .value((d) => d.value)
-      .sort(null)
+    const pie = d3.pie().value(d => d.acv);
+    const dataReady = pie(d3.groups(data, d => d.Cust_Type).map(([key, values]) => ({
+      name: key,
+      acv: d3.sum(values, d => d.acv)
+    })));
 
-    const arc = d3
-      .arc()
-      .innerRadius(radius * 0.6) // Donut hole size
-      .outerRadius(radius)
+    const arc = d3.arc().innerRadius(70).outerRadius(radius);
+    const color = d3.scaleOrdinal().domain(["Existing Customer", "New Customer"]).range(["#1976d2", "#fb8c00"]);
 
-    // Create tooltip
-    const tooltip = d3.select("body").append("div").attr("class", "chart-tooltip").style("opacity", 0)
-
-    // Draw arcs
-    const arcs = svg.selectAll("arc").data(pie(data)).enter().append("g").attr("class", "arc")
-
-    arcs
-      .append("path")
+    svgEl.selectAll("path")
+      .data(dataReady)
+      .join("path")
       .attr("d", arc)
-      .attr("fill", (d, i) => colors[i % colors.length])
-      .attr("stroke", "white")
-      .style("stroke-width", "2px")
-      .on("mouseover", (event, d) => {
-        tooltip.transition().duration(200).style("opacity", 0.9)
-        tooltip
-          .html(`
-          <div>
-            <strong>${d.data.name}</strong><br/>
-            ${formatCurrency(d.data.value)} (${d.data.percentage}%)
-          </div>
-        `)
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY - 28 + "px")
-      })
-      .on("mouseout", () => {
-        tooltip.transition().duration(500).style("opacity", 0)
-      })
+      .attr("fill", d => color(d.data.name))
+      .attr("stroke", "#fff")
+      .style("stroke-width", "2px");
 
-    // Add percentage labels
-    arcs
-      .filter((d) => d.endAngle - d.startAngle > 0.25) // Only add labels to larger segments
-      .append("text")
-      .attr("transform", (d) => {
-        const pos = arc.centroid(d)
-        const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2
-        const x = Math.sin(midAngle) * (radius * 0.8)
-        const y = -Math.cos(midAngle) * (radius * 0.8)
-        return `translate(${x},${y})`
-      })
+    svgEl.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", ".35em")
-      .attr("fill", "white")
-      .attr("font-size", "12px")
-      .attr("font-weight", "bold")
-      .text((d) => `${d.data.percentage}%`)
+      .text(`Total $${(d3.sum(data, d => d.acv) / 1000).toFixed(0)}K`)
+      .style("font-size", "14px");
+  }, [data]);
 
-    // Add center text with total value
-    svg.append("text").attr("text-anchor", "middle").attr("dy", "-0.5em").attr("font-size", "14px").text("Total")
+  return <svg ref={ref}></svg>;
+};
 
-    svg
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "1em")
-      .attr("font-size", "18px")
-      .attr("font-weight", "bold")
-      .text(formatCurrency(totalValue))
-
-    // Add legend if showLegend is true
-    if (showLegend) {
-      const legendRectSize = 15
-      const legendSpacing = 5
-      const legendHeight = legendRectSize + legendSpacing
-
-      const legend = svg
-        .selectAll(".legend")
-        .data(data)
-        .enter()
-        .append("g")
-        .attr("class", "legend")
-        .attr("transform", (d, i) => {
-          const height = legendHeight
-          const offset = (height * data.length) / 2
-          const x = radius + 30
-          const y = i * height - offset
-          return `translate(${x},${y})`
-        })
-
-      legend
-        .append("rect")
-        .attr("width", legendRectSize)
-        .attr("height", legendRectSize)
-        .style("fill", (d, i) => colors[i % colors.length])
-
-      legend
-        .append("text")
-        .attr("x", legendRectSize + legendSpacing)
-        .attr("y", legendRectSize - legendSpacing)
-        .text((d) => `${d.name} (${d.percentage}%)`)
-    }
-
-    // Clean up tooltip when component unmounts
-    return () => {
-      d3.select("body").selectAll(".chart-tooltip").remove()
-    }
-  }, [data, colors, totalValue, showLegend])
-
-  return <svg ref={svgRef} width="100%" height="100%" className="donut-chart" />
-}
-
-export default DonutChartComponent
-
+export default DonutChart;

@@ -1,79 +1,45 @@
-import { Provider } from "react-redux"
-import { ThemeProvider, createTheme } from "@mui/material/styles"
-import CssBaseline from "@mui/material/CssBaseline"
-import Container from "@mui/material/Container"
-import Grid from "@mui/material/Grid"
-import Box from "@mui/material/Box"
-import Typography from "@mui/material/Typography"
-import store from "./Redux/Store"
-import ACVRangeCard from "./Componets/ACVRangeCards"
-import AccountIndustryCard from "./Componets/AccountIndustryCards"
-import TeamCard from "./Componets/TeamCards"
-import CustomerTypeCard from "./Componets/CustomerTypeCards"
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getCustomerTypeData } from "./Redux/customerTypeSlices";
 
-
-// Create a custom theme
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#1976d2",
-    },
-    secondary: {
-      main: "#f57c00",
-    },
-    background: {
-      default: "#f5f5f5",
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 500,
-      fontSize: "1.5rem",
-    },
-  },
-  components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.08)",
-          borderRadius: "8px",
-        },
-      },
-    },
-  },
-})
+import { Container, Grid } from "@mui/material";
+import BarChart from "../src/Charts/BarChart";
+import DonutChart from "../src/Charts/DountCharts";
+import DataTable from "./Commons/DataTables";
+import CardWrapper from "./Componets/CardWrap";
 
 function App() {
+  const dispatch = useDispatch();
+  const { data, loading } = useSelector(state => state.customerType);
+
+  useEffect(() => {
+    dispatch(getCustomerTypeData());
+  }, [dispatch]);
+
+  if (loading) return <div>Loading...</div>;
+
   return (
-    <Provider store={store}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ bgcolor: "background.default", minHeight: "100vh", py: 4 }}>
-          <Container maxWidth="xl">
-            <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-              Sales Performance Dashboard
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} lg={6}>
-                <CustomerTypeCard />
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <AccountIndustryCard />
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <ACVRangeCard />
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <TeamCard />
-              </Grid>
-            </Grid>
-          </Container>
-        </Box>
-      </ThemeProvider>
-    </Provider>
-  )
+    <Container maxWidth="lg">
+      <h2>Won ACV mix by Cust Type</h2>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <CardWrapper title="Bar Chart">
+            <BarChart data={data} />
+          </CardWrapper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <CardWrapper title="Donut Chart">
+            <DonutChart data={data} />
+          </CardWrapper>
+        </Grid>
+        <Grid item xs={12}>
+          <CardWrapper title="Detailed Data Table">
+            <DataTable data={data} />
+          </CardWrapper>
+        </Grid>
+      </Grid>
+    </Container>
+  );
 }
 
-export default App
-
+export default App;

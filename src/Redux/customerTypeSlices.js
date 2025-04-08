@@ -1,39 +1,33 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { fetchCustomerTypeData } from "../Services/api"
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { fetchCustomerType } from "../Services/api";
 
-export const getCustomerTypeData = createAsyncThunk("customerType/getCustomerTypeData", async () => {
-  const response = await fetchCustomerTypeData()
-  return response
-})
-
-const initialState = {
-  data: [],
-  summary: {},
-  loading: false,
-  error: null,
-}
+export const getCustomerTypeData = createAsyncThunk(
+  "customerType/getData",
+  async () => {
+    const response = await fetchCustomerType();
+    return response.data.result.data.result;
+  }
+);
 
 const customerTypeSlice = createSlice({
   name: "customerType",
-  initialState,
-  reducers: {},
+  initialState: {
+    data: [],
+    loading: false,
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getCustomerTypeData.pending, (state) => {
-        state.loading = true
-        state.error = null
+        state.loading = true;
       })
       .addCase(getCustomerTypeData.fulfilled, (state, action) => {
-        state.loading = false
-        state.data = action.payload.data
-        state.summary = action.payload.summary
+        state.loading = false;
+        state.data = action.payload;
       })
-      .addCase(getCustomerTypeData.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.error.message
-      })
+      .addCase(getCustomerTypeData.rejected, (state) => {
+        state.loading = false;
+      });
   },
-})
+});
 
-export default customerTypeSlice.reducer
-
+export default customerTypeSlice.reducer;

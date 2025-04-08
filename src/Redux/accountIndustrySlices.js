@@ -1,39 +1,35 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { fetchAccountIndustryData } from "../Services/api"
+ import {fetchAccountIndustry} from "../Services/api"
+import axios from "axios"
 
-export const getAccountIndustryData = createAsyncThunk("accountIndustry/getAccountIndustryData", async () => {
-  const response = await fetchAccountIndustryData()
-  return response
-})
-
-const initialState = {
-  data: [],
-  summary: {},
-  loading: false,
-  error: null,
-}
+// Async thunk for fetching ACV range data
+export const getAccountIndustryData = createAsyncThunk(
+  "accountIndustry/getData",
+  async () => {
+    const response = await fetchAccountIndustry();
+    return response.data.result.data.result;
+  }
+);
 
 const accountIndustrySlice = createSlice({
   name: "accountIndustry",
-  initialState,
-  reducers: {},
+  initialState: {
+    data: [],
+    loading: false,
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getAccountIndustryData.pending, (state) => {
-        state.loading = true
-        state.error = null
+        state.loading = true;
       })
       .addCase(getAccountIndustryData.fulfilled, (state, action) => {
-        state.loading = false
-        state.data = action.payload.data
-        state.summary = action.payload.summary
+        state.loading = false;
+        state.data = action.payload;
       })
-      .addCase(getAccountIndustryData.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.error.message
-      })
+      .addCase(getAccountIndustryData.rejected, (state) => {
+        state.loading = false;
+      });
   },
-})
+});
 
 export default accountIndustrySlice.reducer
-

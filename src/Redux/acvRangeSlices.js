@@ -1,39 +1,35 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { fetchACVRangeData } from "../Services/api"
+ import {fetchACVRange} from "../Services/api"
+import axios from "axios"
 
-export const getACVRangeData = createAsyncThunk("acvRange/getACVRangeData", async () => {
-  const response = await fetchACVRangeData()
-  return response
-})
-
-const initialState = {
-  data: [],
-  summary: {},
-  loading: false,
-  error: null,
-}
+// Async thunk for fetching ACV range data
+export const getACVTypeData = createAsyncThunk(
+  "acvRange/getData",
+  async () => {
+    const response = await fetchACVRange();
+    return response.data.result.data.result;
+  }
+);
 
 const acvRangeSlice = createSlice({
   name: "acvRange",
-  initialState,
-  reducers: {},
+  initialState: {
+    data: [],
+    loading: false,
+  },
   extraReducers: (builder) => {
     builder
-      .addCase(getACVRangeData.pending, (state) => {
-        state.loading = true
-        state.error = null
+      .addCase(getACVTypeData.pending, (state) => {
+        state.loading = true;
       })
-      .addCase(getACVRangeData.fulfilled, (state, action) => {
-        state.loading = false
-        state.data = action.payload.data
-        state.summary = action.payload.summary
+      .addCase(getACVTypeData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
       })
-      .addCase(getACVRangeData.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.error.message
-      })
+      .addCase(getACVTypeData.rejected, (state) => {
+        state.loading = false;
+      });
   },
-})
+});
 
 export default acvRangeSlice.reducer
-
