@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getCustomerTypeData } from "./Redux/customerTypeSlices";
 
 import { Container, Grid } from "@mui/material";
-import BarChart from "../src/Charts/BarChart";
-import DonutChart from "../src/Charts/DountCharts";
+import { BarChart, DonutChart } from "./Charts/DountCharts";
 import DataTable from "./Commons/DataTables";
 import CardWrapper from "./Componets/CardWrap";
 

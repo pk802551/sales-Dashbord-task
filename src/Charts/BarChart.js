@@ -1,52 +1,128 @@
-import React, { useEffect, useRef } from "react";
-import * as d3 from "d3";
+// import React, { useEffect, useRef } from "react";
+// import * as d3 from "d3";
 
-const BarChart = ({ data }) => {
-  const ref = useRef();
+// const BarChart = ({ data }) => {
+//   const ref = useRef();
 
-  useEffect(() => {
-    if (!data.length) return;
-    const svg = d3.select(ref.current);
-    svg.selectAll("*").remove();
+//   useEffect(() => {
+//     if (!data.length) return;
 
-    const margin = { top: 30, right: 30, bottom: 40, left: 60 },
-      width = 600 - margin.left - margin.right,
-      height = 300 - margin.top - margin.bottom;
+//     const svg = d3.select(ref.current);
+//     svg.selectAll("*").remove();
 
-    const groupedData = d3.groups(data, d => d.closed_fiscal_quarter);
-    const quarters = [...new Set(data.map(d => d.closed_fiscal_quarter))];
-    const types = ["Existing Customer", "New Customer"];
-    const color = d3.scaleOrdinal().domain(types).range(["#1976d2", "#fb8c00"]);
+//     const margin = { top: 50, right: 100, bottom: 60, left: 70 },
+//       width = 800 - margin.left - margin.right,
+//       height = 400 - margin.top - margin.bottom;
 
-    const x0 = d3.scaleBand().domain(quarters).range([0, width]).padding(0.2);
-    const x1 = d3.scaleBand().domain(types).range([0, x0.bandwidth()]);
-    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.acv)]).nice().range([height, 0]);
+//     const svgEl = svg
+//       .attr("width", width + margin.left + margin.right)
+//       .attr("height", height + margin.top + margin.bottom)
+//       .append("g")
+//       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const svgEl = svg
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+//     const quarters = [...new Set(data.map((d) => d.closed_fiscal_quarter))];
+//     const color = d3.scaleOrdinal()
+//       .domain(["Existing Customer", "New Customer"])
+//       .range(["#1976d2", "#fb8c00"]);
 
-    svgEl.append("g")
-      .selectAll("g")
-      .data(groupedData)
-      .join("g")
-      .attr("transform", d => `translate(${x0(d[0])},0)`)
-      .selectAll("rect")
-      .data(d => d[1])
-      .join("rect")
-      .attr("x", d => x1(d.Cust_Type))
-      .attr("y", d => y(d.acv))
-      .attr("width", x1.bandwidth())
-      .attr("height", d => height - y(d.acv))
-      .attr("fill", d => color(d.Cust_Type));
+//     // Group data by quarter and stack the acv values
+//     const grouped = d3.rollup(
+//       data,
+//       (v) => {
+//         const total = d3.sum(v, (d) => d.acv);
+//         return {
+//           items: v.map((d) => ({ ...d, percent: ((d.acv / total) * 100).toFixed(0) })),
+//           total,
+//         };
+//       },
+//       (d) => d.closed_fiscal_quarter
+//     );
 
-    svgEl.append("g").call(d3.axisLeft(y));
-    svgEl.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x0));
-  }, [data]);
+//     const stackData = quarters.map((q) => {
+//       const obj = { quarter: q };
+//       grouped.get(q).items.forEach((item) => {
+//         obj[item.Cust_Type] = item.acv;
+//       });
+//       return obj;
+//     });
 
-  return <svg ref={ref}></svg>;
-};
+//     const stackKeys = ["Existing Customer", "New Customer"];
+//     const stack = d3.stack().keys(stackKeys);
+//     const series = stack(stackData);
 
-export default BarChart;
+//     const x = d3.scaleBand()
+//       .domain(quarters)
+//       .range([0, width])
+//       .padding(0.4);
+
+//     const y = d3.scaleLinear()
+//       .domain([0, d3.max([...grouped.values()].map((d) => d.total)) * 1.1])
+//       .nice()
+//       .range([height, 0]);
+
+//     // Axis
+//     svgEl.append("g").call(d3.axisLeft(y).tickFormat(d3.format("$.2s")));
+//     svgEl.append("g")
+//       .attr("transform", `translate(0, ${height})`)
+//       .call(d3.axisBottom(x));
+
+//     // Bars
+//     svgEl.selectAll("g.layer")
+//       .data(series)
+//       .join("g")
+//       .attr("fill", (d) => color(d.key))
+//       .selectAll("rect")
+//       .data((d) => d)
+//       .join("rect")
+//       .attr("x", (d) => x(d.data.quarter))
+//       .attr("y", (d) => y(d[1]))
+//       .attr("height", (d) => y(d[0]) - y(d[1]))
+//       .attr("width", x.bandwidth());
+
+//     // Internal section labels
+//     series.forEach((stackLayer, layerIdx) => {
+//       svgEl.selectAll(`text.label-${layerIdx}`)
+//         .data(stackLayer)
+//         .join("text")
+//         .attr("x", (d) => x(d.data.quarter) + x.bandwidth() / 2)
+//         .attr("y", (d) => y(d[1]) + 15)
+//         .attr("text-anchor", "middle")
+//         .attr("fill", "#fff")
+//         .attr("font-size", "12px")
+//         .text((d) => {
+//           const value = d[1] - d[0];
+//           const percent = (
+//             (value / (d[1] - d[0] + d[0])) *
+//             100
+//           ).toFixed(0);
+//           return `${d3.format("$.2s")(value)}\n(${percent}%)`;
+//         });
+//     });
+
+//     // Total value label on top of each bar
+//     quarters.forEach((q) => {
+//       const total = grouped.get(q).total;
+//       svgEl.append("text")
+//         .attr("x", x(q) + x.bandwidth() / 2)
+//         .attr("y", y(total) - 10)
+//         .attr("text-anchor", "middle")
+//         .attr("font-size", "12px")
+//         .attr("fill", "#000")
+//         .attr("font-weight", "bold")
+//         .text(d3.format("$.2s")(total));
+//     });
+
+//     // Chart Title
+//     svgEl.append("text")
+//       .attr("x", width / 2)
+//       .attr("y", -15)
+//       .attr("text-anchor", "middle")
+//       .attr("font-size", "16px")
+//       .attr("font-weight", "bold")
+//       .text("Won ACV mix by Cust Type");
+//   }, [data]);
+
+//   return <svg ref={ref} />;
+// };
+
+// export default BarChart;
